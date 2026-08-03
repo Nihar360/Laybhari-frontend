@@ -30,6 +30,7 @@ export interface Product {
   price?: number; // fallback calculated from first variant
   stock?: number; // fallback calculated from first variant
   imageUrl: string | null;
+  imageUrls?: string[];
   isActive: boolean;
   categoryId: number;
   categoryName: string;

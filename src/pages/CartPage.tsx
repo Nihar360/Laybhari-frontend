@@ -110,7 +110,6 @@ export const CartPage: React.FC = () => {
                         <div>
                           <h4 style={{ fontSize: '15px', fontWeight: 800, color: '#291E14', marginBottom: '4px' }}>{item.productName}</h4>
                           <p style={{ fontSize: '12px', color: '#B45309', fontWeight: 700, marginBottom: '2px' }}>Net Weight: {item.weightLabel}</p>
-                          <span style={{ fontSize: '11px', fontWeight: 700, color: '#15803D' }}>✓ Saved in DB</span>
                         </div>
                       </div>
 

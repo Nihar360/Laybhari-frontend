@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Flame, Wheat, Sparkles, Gift } from 'lucide-react';
+import { ArrowRight, Flame, Wheat, Sparkles, Gift, Tag } from 'lucide-react';
 import { Product, Category } from '../types';
 import { productService } from '../services/productService';
 import { ProductCard } from '../components/ProductCard';
@@ -11,6 +11,7 @@ import { FeaturesSection } from '../components/FeaturesSection';
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [newsletterEmail, setNewsletterEmail] = useState('');
@@ -20,9 +21,12 @@ export const HomePage: React.FC = () => {
     setIsLoading(true);
     setErrorMessage(null);
     try {
-      const pageData = await productService.getProducts(0, 10);
-      const fetched = pageData.content || [];
-      setProducts(fetched);
+      const [pageData, catData] = await Promise.all([
+        productService.getProducts(0, 10),
+        productService.getCategories().catch(() => []),
+      ]);
+      setProducts(pageData.content || []);
+      setCategories(catData || []);
     } catch (err: any) {
       setErrorMessage(err.message || 'Could not connect to Laybhari Backend.');
     } finally {
@@ -43,6 +47,14 @@ export const HomePage: React.FC = () => {
     }
   };
 
+  // Fallback default categories if database has none yet
+  const displayCategories: Category[] = categories.length > 0 ? categories : [
+    { id: 1, name: 'MASALAS' },
+    { id: 2, name: 'MIXES (PITH)' },
+    { id: 3, name: 'UNIQUE PRODUCTS' },
+    { id: 4, name: 'COMBO OFFERS' },
+  ];
+
   return (
     <div className="fade-in">
       
@@ -52,7 +64,7 @@ export const HomePage: React.FC = () => {
       {/* Modern Premium Ecommerce Features Section */}
       <FeaturesSection />
 
-      {/* SHOP BY CATEGORY Section (Compact Apple / Shopify Minimalist Redesign) */}
+      {/* SHOP BY CATEGORY Section (Dynamic Admin Category Images) */}
       <section className="category-section-wrapper" style={{ padding: '28px 0', backgroundColor: '#FAF6F0', borderBottom: '1px solid #E8DFD5' }}>
         <div className="container">
           <div className="section-title-wrapper" style={{ marginBottom: '16px' }}>
@@ -60,45 +72,54 @@ export const HomePage: React.FC = () => {
           </div>
 
           <div className="categories-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
-            {[
-              { id: 1, name: 'MASALAS', icon: <Flame size={18} /> },
-              { id: 2, name: 'MIXES (PITH)', icon: <Wheat size={18} /> },
-              { id: 3, name: 'UNIQUE PRODUCTS', icon: <Sparkles size={18} /> },
-              { id: 4, name: 'COMBO OFFERS', icon: <Gift size={18} /> },
-            ].map((cat) => (
+            {displayCategories.map((cat) => (
               <div
                 key={cat.id}
                 className="category-item-card"
-                onClick={() => navigate(`/shop?category=${cat.name.toLowerCase()}`)}
+                onClick={() => navigate(`/shop?category=${encodeURIComponent(cat.name.toLowerCase())}`)}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '8px',
+                  gap: '10px',
                   padding: '10px 16px',
-                  backgroundColor: 'transparent',
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #E8DFD5',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease',
-                  borderBottom: '2px solid transparent',
-                  borderRadius: '4px 4px 0 0'
+                  borderRadius: '10px',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.borderBottomColor = '#D97706';
-                  const icon = e.currentTarget.querySelector('.cat-icon') as HTMLElement;
-                  if (icon) icon.style.color = '#D97706';
+                  e.currentTarget.style.borderColor = '#D97706';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(217, 119, 6, 0.15)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.borderBottomColor = 'transparent';
-                  const icon = e.currentTarget.querySelector('.cat-icon') as HTMLElement;
-                  if (icon) icon.style.color = '#382012';
+                  e.currentTarget.style.borderColor = '#E8DFD5';
+                  e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.03)';
                 }}
               >
-                <span className="cat-icon" style={{ color: '#382012', transition: 'color 0.2s ease', display: 'flex' }}>
-                  {cat.icon}
-                </span>
-                <span style={{ fontSize: '13px', fontWeight: 800, color: '#382012', letterSpacing: '0.5px' }}>
+                <div style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  backgroundColor: '#FEF3C7',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  border: '1px solid #FDE68A'
+                }}>
+                  {cat.imageUrl ? (
+                    <img src={cat.imageUrl} alt={cat.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <Tag size={16} color="#D97706" />
+                  )}
+                </div>
+                <span style={{ fontSize: '13px', fontWeight: 800, color: '#382012', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
                   {cat.name}
                 </span>
               </div>

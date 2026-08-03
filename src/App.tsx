@@ -7,7 +7,6 @@ import { Navbar } from './components/Navbar';
 import { CartDrawer } from './components/CartDrawer';
 import { AuthModal } from './components/AuthModal';
 import { Footer } from './components/Footer';
-import { MobileBottomNav } from './components/MobileBottomNav';
 import { FloatingCartBar } from './components/FloatingCartBar';
 
 import { HomePage } from './pages/HomePage';
@@ -57,7 +56,6 @@ export function App() {
 
             <Footer />
             <CartDrawer />
-            <MobileBottomNav onOpenAuthModal={() => setIsAuthModalOpen(true)} />
             <FloatingCartBar />
             <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
           </div>

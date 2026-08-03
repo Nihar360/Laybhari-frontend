@@ -118,12 +118,9 @@ export const ProductDetailPage: React.FC = () => {
   if (errorMessage && !product) return <ErrorView error={errorMessage} onRetry={fetchProductData} />;
   if (!product) return <ErrorView error="Product not found" onRetry={fetchProductData} />;
 
-  const galleryImages = [
-    product.imageUrl || '/logo-badge.jpg',
-    'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=400&q=80',
-    'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?auto=format&fit=crop&w=400&q=80',
-    'https://images.unsplash.com/photo-1599940824399-b87987ceb72a?auto=format&fit=crop&w=400&q=80',
-  ];
+  const galleryImages = (product.imageUrls && product.imageUrls.length > 0)
+    ? product.imageUrls
+    : (product.imageUrl ? [product.imageUrl] : []);
 
   const reviewCount = product.reviewCount || 128;
   const currentPrice = selectedVariant ? selectedVariant.price : (product.variants && product.variants.length > 0 ? product.variants[0].price : 0);
@@ -159,44 +156,46 @@ export const ProductDetailPage: React.FC = () => {
           {/* Left Column: Vertical Thumbnails + Main Showcase Image */}
           <div className="pdp-gallery-col" style={{ display: 'flex', gap: '16px' }}>
             
-            <div className="pdp-thumbnail-strip" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-              <button
-                className="pdp-thumb-arrow"
-                onClick={() => setSelectedImageIndex((prev) => Math.max(0, prev - 1))}
-                style={{ border: '1px solid #E8DFD5', borderRadius: '4px', padding: '4px', backgroundColor: '#FFFFFF', cursor: 'pointer' }}
-              >
-                <ChevronUp size={16} color="#382012" />
-              </button>
-
-              {galleryImages.map((imgUrl, index) => (
-                <div
-                  key={index}
-                  onClick={() => setSelectedImageIndex(index)}
-                  className="pdp-thumb-item"
-                  style={{
-                    width: '64px',
-                    height: '64px',
-                    borderRadius: '8px',
-                    border: selectedImageIndex === index ? '2px solid #D97706' : '1px solid #E8DFD5',
-                    padding: '4px',
-                    backgroundColor: '#FFFFFF',
-                    cursor: 'pointer',
-                    overflow: 'hidden',
-                    transition: 'all 0.2s ease'
-                  }}
+            {galleryImages.length > 1 && (
+              <div className="pdp-thumbnail-strip" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                <button
+                  className="pdp-thumb-arrow"
+                  onClick={() => setSelectedImageIndex((prev) => Math.max(0, prev - 1))}
+                  style={{ border: '1px solid #E8DFD5', borderRadius: '4px', padding: '4px', backgroundColor: '#FFFFFF', cursor: 'pointer' }}
                 >
-                  <img src={imgUrl} alt={`Thumbnail ${index + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }} />
-                </div>
-              ))}
+                  <ChevronUp size={16} color="#382012" />
+                </button>
 
-              <button
-                className="pdp-thumb-arrow"
-                onClick={() => setSelectedImageIndex((prev) => Math.min(galleryImages.length - 1, prev + 1))}
-                style={{ border: '1px solid #E8DFD5', borderRadius: '4px', padding: '4px', backgroundColor: '#FFFFFF', cursor: 'pointer' }}
-              >
-                <ChevronDown size={16} color="#382012" />
-              </button>
-            </div>
+                {galleryImages.map((imgUrl, index) => (
+                  <div
+                    key={index}
+                    onClick={() => setSelectedImageIndex(index)}
+                    className="pdp-thumb-item"
+                    style={{
+                      width: '64px',
+                      height: '64px',
+                      borderRadius: '8px',
+                      border: selectedImageIndex === index ? '2px solid #D97706' : '1px solid #E8DFD5',
+                      padding: '4px',
+                      backgroundColor: '#FFFFFF',
+                      cursor: 'pointer',
+                      overflow: 'hidden',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <img src={imgUrl} alt={`Thumbnail ${index + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }} />
+                  </div>
+                ))}
+
+                <button
+                  className="pdp-thumb-arrow"
+                  onClick={() => setSelectedImageIndex((prev) => Math.min(galleryImages.length - 1, prev + 1))}
+                  style={{ border: '1px solid #E8DFD5', borderRadius: '4px', padding: '4px', backgroundColor: '#FFFFFF', cursor: 'pointer' }}
+                >
+                  <ChevronDown size={16} color="#382012" />
+                </button>
+              </div>
+            )}
 
             <div
               className="pdp-showcase-box"
@@ -214,9 +213,9 @@ export const ProductDetailPage: React.FC = () => {
                 boxShadow: '0 4px 16px rgba(0,0,0,0.03)'
               }}
             >
-              {product.imageUrl ? (
+              {galleryImages.length > 0 ? (
                 <img
-                  src={galleryImages[selectedImageIndex]}
+                  src={galleryImages[selectedImageIndex] || galleryImages[0]}
                   alt={product.name}
                   style={{ maxWidth: '100%', maxHeight: '400px', objectFit: 'contain' }}
                 />

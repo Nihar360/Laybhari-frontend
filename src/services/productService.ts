@@ -17,6 +17,11 @@ export const productService = {
     return response.data;
   },
 
+  getCategories: async (): Promise<Category[]> => {
+    const response = await apiClient.get<Category[]>('/api/categories');
+    return response.data;
+  },
+
   searchProducts: async (query: string): Promise<Product[]> => {
     const response = await apiClient.get<Product[]>(`/api/products/search?q=${encodeURIComponent(query)}`);
     return response.data;
