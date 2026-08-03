@@ -65,13 +65,8 @@ export const HomePage: React.FC = () => {
       <FeaturesSection />
 
       {/* SHOP BY CATEGORY Section (Dynamic Admin Category Images & Compact Spice Pills) */}
-      <section className="category-section-wrapper" style={{ padding: '32px 0', backgroundColor: '#FAF6F0', borderBottom: '1px solid #E8DFD5' }}>
+      <section className="category-section-wrapper" style={{ padding: '20px 0', backgroundColor: '#FAF6F0', borderBottom: '1px solid #E8DFD5' }}>
         <div className="container">
-          <div className="section-title-wrapper" style={{ marginBottom: '20px', textAlign: 'center' }}>
-            <h2 className="section-title" style={{ fontSize: '18px', letterSpacing: '1.5px', color: '#382012', margin: 0 }}>EXPLORE BY CATEGORY</h2>
-            <p style={{ fontSize: '13px', color: '#78350F', marginTop: '4px', fontWeight: 500 }}>Handcrafted authentic Maharashtrian spices & blends</p>
-          </div>
-
           <div className="categories-flex-wrap" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: '12px' }}>
             {/* All Products Quick Filter */}
             <div
