@@ -1,11 +1,15 @@
 import axios from 'axios';
 
 const getApiBaseUrl = () => {
-  const envUrl = import.meta.env.VITE_API_BASE_URL;
+  let envUrl = import.meta.env.VITE_API_BASE_URL;
   if (!envUrl || envUrl.includes('localhost') || envUrl.includes('127.0.0.1')) {
     return 'https://laybhari-backend-production.up.railway.app';
   }
-  return envUrl.replace(/\/$/, '');
+  envUrl = envUrl.trim().replace(/\/$/, '');
+  if (envUrl.startsWith('http://')) {
+    envUrl = envUrl.replace('http://', 'https://');
+  }
+  return envUrl;
 };
 
 const apiClient = axios.create({
