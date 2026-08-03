@@ -13,8 +13,11 @@ export const productService = {
   },
 
   getProductsByCategory: async (categoryId: number): Promise<Product[]> => {
-    const response = await apiClient.get<Product[]>(`/api/products/category/${categoryId}`);
-    return response.data;
+    const response = await apiClient.get<any>(`/api/products/category/${categoryId}?size=100`);
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    return response.data?.content || [];
   },
 
   getCategories: async (): Promise<Category[]> => {
@@ -23,8 +26,11 @@ export const productService = {
   },
 
   searchProducts: async (query: string): Promise<Product[]> => {
-    const response = await apiClient.get<Product[]>(`/api/products/search?q=${encodeURIComponent(query)}`);
-    return response.data;
+    const response = await apiClient.get<any>(`/api/products/search?q=${encodeURIComponent(query)}&size=100`);
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    return response.data?.content || [];
   },
 
   extractCategoriesFromProducts: (products: Product[]): Category[] => {

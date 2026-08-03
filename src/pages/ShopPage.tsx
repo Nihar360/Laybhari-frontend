@@ -17,6 +17,33 @@ export const ShopPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // 1. Fetch categories on mount
+  useEffect(() => {
+    productService.getCategories()
+      .then((cats) => setCategories(cats))
+      .catch((err) => console.error('Failed to fetch categories:', err));
+  }, []);
+
+  // 2. Sync categoryParam from URL to selectedCategory
+  useEffect(() => {
+    if (categoryParam) {
+      const numericId = Number(categoryParam);
+      if (!isNaN(numericId) && numericId > 0) {
+        setSelectedCategory(numericId);
+      } else if (categories.length > 0) {
+        const found = categories.find(
+          (c) => c.name.toLowerCase() === categoryParam.toLowerCase()
+        );
+        if (found) {
+          setSelectedCategory(found.id);
+        }
+      }
+    } else {
+      setSelectedCategory(null);
+    }
+  }, [categoryParam, categories]);
+
+  // 3. Fetch products based on selectedCategory or searchQuery
   const loadProducts = async () => {
     setIsLoading(true);
     setErrorMessage(null);
@@ -32,11 +59,6 @@ export const ShopPage: React.FC = () => {
       }
 
       setProducts(result);
-
-      if (categories.length === 0 && result.length > 0) {
-        const extracted = productService.extractCategoriesFromProducts(result);
-        setCategories(extracted);
-      }
     } catch (err: any) {
       setErrorMessage(err.message || 'Failed to load products from server.');
     } finally {
@@ -80,7 +102,7 @@ export const ShopPage: React.FC = () => {
             {categories.map((cat) => (
               <button
                 key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
+                onClick={() => { setSelectedCategory(cat.id); setSearchParams({ category: String(cat.id) }); }}
                 style={{
                   padding: '6px 16px',
                   borderRadius: '20px',

@@ -121,7 +121,7 @@ export const HomePage: React.FC = () => {
               <div
                 key={cat.id}
                 className="category-pill-card"
-                onClick={() => navigate(`/shop?category=${encodeURIComponent(cat.name.toLowerCase())}`)}
+                onClick={() => navigate(`/shop?category=${cat.id}`)}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
