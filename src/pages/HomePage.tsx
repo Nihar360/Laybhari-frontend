@@ -64,46 +64,98 @@ export const HomePage: React.FC = () => {
       {/* Modern Premium Ecommerce Features Section */}
       <FeaturesSection />
 
-      {/* SHOP BY CATEGORY Section (Dynamic Admin Category Images) */}
-      <section className="category-section-wrapper" style={{ padding: '28px 0', backgroundColor: '#FAF6F0', borderBottom: '1px solid #E8DFD5' }}>
+      {/* SHOP BY CATEGORY Section (Dynamic Admin Category Images & Compact Spice Pills) */}
+      <section className="category-section-wrapper" style={{ padding: '32px 0', backgroundColor: '#FAF6F0', borderBottom: '1px solid #E8DFD5' }}>
         <div className="container">
-          <div className="section-title-wrapper" style={{ marginBottom: '16px' }}>
-            <h2 className="section-title" style={{ fontSize: '18px', letterSpacing: '1px' }}>SHOP BY CATEGORY</h2>
+          <div className="section-title-wrapper" style={{ marginBottom: '20px', textAlign: 'center' }}>
+            <h2 className="section-title" style={{ fontSize: '18px', letterSpacing: '1.5px', color: '#382012', margin: 0 }}>EXPLORE BY CATEGORY</h2>
+            <p style={{ fontSize: '13px', color: '#78350F', marginTop: '4px', fontWeight: 500 }}>Handcrafted authentic Maharashtrian spices & blends</p>
           </div>
 
-          <div className="categories-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
+          <div className="categories-flex-wrap" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: '12px' }}>
+            {/* All Products Quick Filter */}
+            <div
+              className="category-pill-card"
+              onClick={() => navigate('/shop')}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '8px 20px 8px 10px',
+                backgroundColor: '#FFFFFF',
+                border: '1.5px solid #E8DFD5',
+                borderRadius: '9999px',
+                cursor: 'pointer',
+                transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                boxShadow: '0 2px 8px rgba(56, 32, 18, 0.05)',
+                userSelect: 'none',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-3px)';
+                e.currentTarget.style.borderColor = '#D97706';
+                e.currentTarget.style.boxShadow = '0 8px 20px rgba(217, 119, 6, 0.18)';
+                e.currentTarget.style.backgroundColor = '#FFFBEB';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.borderColor = '#E8DFD5';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(56, 32, 18, 0.05)';
+                e.currentTarget.style.backgroundColor = '#FFFFFF';
+              }}
+            >
+              <div style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                backgroundColor: '#FEF3C7',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                border: '2px solid #FDE68A',
+              }}>
+                <Tag size={16} color="#D97706" />
+              </div>
+              <span style={{ fontSize: '13px', fontWeight: 800, color: '#382012', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+                All Products
+              </span>
+            </div>
+
+            {/* Dynamic Admin Categories */}
             {displayCategories.map((cat) => (
               <div
                 key={cat.id}
-                className="category-item-card"
+                className="category-pill-card"
                 onClick={() => navigate(`/shop?category=${encodeURIComponent(cat.name.toLowerCase())}`)}
                 style={{
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
                   gap: '10px',
-                  padding: '10px 16px',
+                  padding: '8px 20px 8px 10px',
                   backgroundColor: '#FFFFFF',
-                  border: '1px solid #E8DFD5',
+                  border: '1.5px solid #E8DFD5',
+                  borderRadius: '9999px',
                   cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  borderRadius: '10px',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
+                  transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                  boxShadow: '0 2px 8px rgba(56, 32, 18, 0.05)',
+                  userSelect: 'none',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.transform = 'translateY(-3px)';
                   e.currentTarget.style.borderColor = '#D97706';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(217, 119, 6, 0.15)';
+                  e.currentTarget.style.boxShadow = '0 8px 20px rgba(217, 119, 6, 0.18)';
+                  e.currentTarget.style.backgroundColor = '#FFFBEB';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)';
                   e.currentTarget.style.borderColor = '#E8DFD5';
-                  e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.03)';
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(56, 32, 18, 0.05)';
+                  e.currentTarget.style.backgroundColor = '#FFFFFF';
                 }}
               >
                 <div style={{
-                  width: '32px',
-                  height: '32px',
+                  width: '36px',
+                  height: '36px',
                   borderRadius: '50%',
                   backgroundColor: '#FEF3C7',
                   overflow: 'hidden',
@@ -111,7 +163,7 @@ export const HomePage: React.FC = () => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0,
-                  border: '1px solid #FDE68A'
+                  border: '2px solid #FDE68A',
                 }}>
                   {cat.imageUrl ? (
                     <img src={cat.imageUrl} alt={cat.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
