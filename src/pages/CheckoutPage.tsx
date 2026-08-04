@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { MapPin, Plus, Edit2, CheckCircle2, Truck, ShieldCheck, ArrowRight, ShoppingBag, Phone } from 'lucide-react';
+import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
+import { auth } from '../config/firebase';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { addressService } from '../services/addressService';
@@ -24,6 +26,7 @@ export const CheckoutPage: React.FC = () => {
   const [isSendingOtp, setIsSendingOtp] = useState<boolean>(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState<boolean>(false);
   const [otpMsg, setOtpMsg] = useState<string | null>(null);
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
 
   // New Address Form State
   const [isAddingAddress, setIsAddingAddress] = useState<boolean>(false);
@@ -84,6 +87,15 @@ export const CheckoutPage: React.FC = () => {
     }
   };
 
+  const setupRecaptcha = () => {
+    if (!(window as any).recaptchaVerifierCheckout) {
+      (window as any).recaptchaVerifierCheckout = new RecaptchaVerifier(auth, 'recaptcha-container-checkout', {
+        'size': 'invisible',
+        'callback': () => {}
+      });
+    }
+  };
+
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleaned = phone.replace(/\D/g, '');
@@ -94,12 +106,24 @@ export const CheckoutPage: React.FC = () => {
     setIsSendingOtp(true);
     setError(null);
     setOtpMsg(null);
+
     try {
-      const res = await authService.sendOtp(cleaned);
+      setupRecaptcha();
+      const appVerifier = (window as any).recaptchaVerifierCheckout;
+      const formattedPhone = `+91${cleaned}`;
+      const confirmation = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
+      setConfirmationResult(confirmation);
       setOtpSent(true);
-      setOtpMsg(res.message || 'OTP sent successfully to your phone number.');
+      setOtpMsg(`Firebase SMS OTP sent to +91 ${cleaned}`);
     } catch (err: any) {
-      setError(err.message || 'Failed to send OTP. Please check your phone number.');
+      console.error('Firebase send OTP error:', err);
+      if ((window as any).recaptchaVerifierCheckout) {
+        try {
+          (window as any).recaptchaVerifierCheckout.clear();
+          (window as any).recaptchaVerifierCheckout = null;
+        } catch (e) {}
+      }
+      setError(err.message || 'Failed to send OTP via Firebase.');
     } finally {
       setIsSendingOtp(false);
     }
@@ -111,13 +135,21 @@ export const CheckoutPage: React.FC = () => {
       setError('Please enter the 6-digit OTP code.');
       return;
     }
+    if (!confirmationResult) {
+      setError('No active OTP session. Please request a new OTP code.');
+      return;
+    }
     setIsVerifyingOtp(true);
     setError(null);
+
     try {
-      const authRes = await authService.verifyOtp(phone, otp);
+      const userCredential = await confirmationResult.confirm(otp);
+      const idToken = await userCredential.user.getIdToken();
+      const authRes = await authService.firebaseLogin(idToken);
       setAuthData(authRes);
       await mergeGuestCart();
     } catch (err: any) {
+      console.error('Firebase OTP verification error:', err);
       setError(err.message || 'Invalid or expired OTP code.');
     } finally {
       setIsVerifyingOtp(false);
@@ -322,6 +354,8 @@ export const CheckoutPage: React.FC = () => {
                   </div>
                 </div>
 
+                <div id="recaptcha-container-checkout" style={{ marginBottom: '10px' }}></div>
+
                 <button
                   type="submit"
                   disabled={isSendingOtp || phone.length < 10}
@@ -349,9 +383,6 @@ export const CheckoutPage: React.FC = () => {
                     style={{ width: '100%', padding: '14px', borderRadius: '8px', border: '2px solid #C2410C', fontSize: '22px', fontWeight: 900, textAlign: 'center', letterSpacing: '8px', outline: 'none' }}
                     autoFocus
                   />
-                  <p style={{ fontSize: '11px', color: '#786C62', marginTop: '8px', textAlign: 'center' }}>
-                    ℹ️ Check server console log for the 6-digit OTP code.
-                  </p>
                 </div>
 
                 <button

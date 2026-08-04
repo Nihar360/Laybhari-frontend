@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { X, Lock, Mail, User as UserIcon, Phone } from 'lucide-react';
+import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
+import { auth } from '../config/firebase';
 import { useAuth } from '../context/AuthContext';
 import { authService } from '../services/authService';
 import { useCart } from '../context/CartContext';
@@ -27,11 +29,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [otpCode, setOtpCode] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [otpMsg, setOtpMsg] = useState<string | null>(null);
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   if (!isOpen) return null;
+
+  const setupRecaptcha = () => {
+    if (!(window as any).recaptchaVerifierAuthModal) {
+      (window as any).recaptchaVerifierAuthModal = new RecaptchaVerifier(auth, 'recaptcha-container-auth-modal', {
+        'size': 'invisible',
+        'callback': () => {}
+      });
+    }
+  };
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,12 +55,24 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     setErrorMsg(null);
     setOtpMsg(null);
     setIsLoading(true);
+
     try {
-      const res = await authService.sendOtp(cleaned);
+      setupRecaptcha();
+      const appVerifier = (window as any).recaptchaVerifierAuthModal;
+      const formattedPhone = `+91${cleaned}`;
+      const confirmation = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
+      setConfirmationResult(confirmation);
       setOtpSent(true);
-      setOtpMsg(res.message || 'OTP sent successfully to your phone number.');
+      setOtpMsg(`Firebase SMS OTP sent to +91 ${cleaned}`);
     } catch (err: any) {
-      setErrorMsg(err.message || 'Failed to send OTP. Please check your phone number.');
+      console.error('Firebase send OTP error:', err);
+      if ((window as any).recaptchaVerifierAuthModal) {
+        try {
+          (window as any).recaptchaVerifierAuthModal.clear();
+          (window as any).recaptchaVerifierAuthModal = null;
+        } catch (e) {}
+      }
+      setErrorMsg(err.message || 'Failed to send OTP via Firebase.');
     } finally {
       setIsLoading(false);
     }
@@ -60,14 +84,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       setErrorMsg('Please enter the 6-digit OTP code.');
       return;
     }
+    if (!confirmationResult) {
+      setErrorMsg('No active OTP session. Please request a new OTP code.');
+      return;
+    }
     setErrorMsg(null);
     setIsLoading(true);
+
     try {
-      const res = await authService.verifyOtp(otpPhone, otpCode);
+      const credential = await confirmationResult.confirm(otpCode);
+      const idToken = await credential.user.getIdToken();
+      const res = await authService.firebaseLogin(idToken);
       setAuthData(res);
       await mergeGuestCart();
       onClose();
     } catch (err: any) {
+      console.error('Firebase OTP verification error:', err);
       setErrorMsg(err.message || 'Invalid or expired OTP code.');
     } finally {
       setIsLoading(false);
@@ -228,6 +260,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   </div>
                 </div>
 
+                <div id="recaptcha-container-auth-modal" style={{ marginBottom: '10px' }}></div>
+
                 <button
                   type="submit"
                   disabled={isLoading || otpPhone.length < 10}
@@ -255,9 +289,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '2px solid #C2410C', fontSize: '20px', fontWeight: 900, textAlign: 'center', letterSpacing: '6px', outline: 'none' }}
                     autoFocus
                   />
-                  <p style={{ fontSize: '11px', color: '#786C62', marginTop: '6px', textAlign: 'center' }}>
-                    ℹ️ Check server console log for the 6-digit OTP code.
-                  </p>
                 </div>
 
                 <button

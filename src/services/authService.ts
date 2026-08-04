@@ -40,6 +40,11 @@ export const authService = {
     return response.data;
   },
 
+  firebaseLogin: async (idToken: string): Promise<AuthResponse> => {
+    const response = await apiClient.post<AuthResponse>('/api/auth/firebase-login', { idToken });
+    return response.data;
+  },
+
   updateProfile: async (payload: UpdateProfilePayload): Promise<AuthResponse> => {
     const response = await apiClient.put<AuthResponse>('/api/auth/profile', payload);
     return response.data;
