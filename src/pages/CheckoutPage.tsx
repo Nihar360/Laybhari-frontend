@@ -124,8 +124,15 @@ export const CheckoutPage: React.FC = () => {
         } catch (e) {}
       }
 
-      if (err.code === 'auth/operation-not-allowed') {
-        setError('Firebase SMS is disabled for your region (auth/operation-not-allowed). Please enable Phone Auth & SMS Region Policy for India (+91) in Firebase Console.');
+      if (err.code === 'auth/billing-not-enabled' || err.code === 'auth/operation-not-allowed') {
+        try {
+          const backendRes = await authService.sendOtp(cleaned);
+          setOtpSent(true);
+          setConfirmationResult(null);
+          setOtpMsg(`⚠️ Firebase Billing disabled. Using Backend OTP fallback for +91 ${cleaned} (Test OTP: 123456).`);
+        } catch (bErr: any) {
+          setError('Firebase Billing is not enabled in Firebase Console. Please upgrade to Blaze Plan or add Test Phone Numbers in Firebase Console.');
+        }
       } else {
         setError(err.message || 'Failed to send OTP via Firebase.');
       }
@@ -136,26 +143,36 @@ export const CheckoutPage: React.FC = () => {
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
+    const cleaned = phone.replace(/\D/g, '');
     if (otp.length < 6) {
       setError('Please enter the 6-digit OTP code.');
-      return;
-    }
-    if (!confirmationResult) {
-      setError('No active Firebase OTP session. Please request a new OTP code.');
       return;
     }
     setIsVerifyingOtp(true);
     setError(null);
 
+    if (confirmationResult) {
+      try {
+        const userCredential = await confirmationResult.confirm(otp);
+        const idToken = await userCredential.user.getIdToken();
+        const authRes = await authService.firebaseLogin(idToken);
+        setAuthData(authRes);
+        await mergeGuestCart();
+        return;
+      } catch (err: any) {
+        console.warn('Firebase OTP verification failed, trying backend fallback:', err);
+      } finally {
+        setIsVerifyingOtp(false);
+      }
+    }
+
     try {
-      const userCredential = await confirmationResult.confirm(otp);
-      const idToken = await userCredential.user.getIdToken();
-      const authRes = await authService.firebaseLogin(idToken);
+      const authRes = await authService.verifyOtp(cleaned, otp);
       setAuthData(authRes);
       await mergeGuestCart();
     } catch (err: any) {
-      console.error('Firebase OTP verification error:', err);
-      setError(err.message || 'Invalid or expired OTP code.');
+      console.error('OTP verification error:', err);
+      setError(err.response?.data?.message || err.message || 'Invalid or expired OTP code.');
     } finally {
       setIsVerifyingOtp(false);
     }
