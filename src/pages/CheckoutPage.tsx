@@ -107,16 +107,6 @@ export const CheckoutPage: React.FC = () => {
     setError(null);
     setOtpMsg(null);
 
-    let backendSuccess = false;
-    try {
-      const backendRes = await authService.sendOtp(cleaned);
-      backendSuccess = true;
-      setOtpSent(true);
-      setOtpMsg(backendRes.message || `OTP sent for +91 ${cleaned}. (Test OTP: 123456)`);
-    } catch (bErr: any) {
-      console.warn('Backend OTP send warning:', bErr);
-    }
-
     try {
       setupRecaptcha();
       const appVerifier = (window as any).recaptchaVerifierCheckout;
@@ -124,7 +114,7 @@ export const CheckoutPage: React.FC = () => {
       const confirmation = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
       setConfirmationResult(confirmation);
       setOtpSent(true);
-      setOtpMsg(`Firebase SMS OTP sent to +91 ${cleaned}`);
+      setOtpMsg(`Firebase SMS OTP sent to +91 ${cleaned}. Please check your phone.`);
     } catch (err: any) {
       console.error('Firebase send OTP error:', err);
       if ((window as any).recaptchaVerifierCheckout) {
@@ -135,12 +125,8 @@ export const CheckoutPage: React.FC = () => {
       }
 
       if (err.code === 'auth/operation-not-allowed') {
-        if (backendSuccess) {
-          setOtpMsg(`⚠️ Firebase SMS region disabled in Firebase Console. Using backend OTP fallback (Test OTP: 123456).`);
-        } else {
-          setError('Firebase SMS is disabled for your country/region. Enable Phone Auth & SMS Region Policy in Firebase Console.');
-        }
-      } else if (!backendSuccess) {
+        setError('Firebase SMS is disabled for your region (auth/operation-not-allowed). Please enable Phone Auth & SMS Region Policy for India (+91) in Firebase Console.');
+      } else {
         setError(err.message || 'Failed to send OTP via Firebase.');
       }
     } finally {
@@ -150,41 +136,27 @@ export const CheckoutPage: React.FC = () => {
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    const cleaned = phone.replace(/\D/g, '');
     if (otp.length < 6) {
       setError('Please enter the 6-digit OTP code.');
+      return;
+    }
+    if (!confirmationResult) {
+      setError('No active Firebase OTP session. Please request a new OTP code.');
       return;
     }
     setIsVerifyingOtp(true);
     setError(null);
 
-    let verified = false;
-
-    if (confirmationResult) {
-      try {
-        const userCredential = await confirmationResult.confirm(otp);
-        const idToken = await userCredential.user.getIdToken();
-        const authRes = await authService.firebaseLogin(idToken);
-        setAuthData(authRes);
-        await mergeGuestCart();
-        verified = true;
-      } catch (err: any) {
-        console.warn('Firebase OTP verification failed, trying backend OTP fallback:', err);
-      }
-    }
-
-    if (!verified) {
-      try {
-        const authRes = await authService.verifyOtp(cleaned, otp);
-        setAuthData(authRes);
-        await mergeGuestCart();
-      } catch (err: any) {
-        console.error('Backend OTP verification error:', err);
-        setError(err.response?.data?.message || err.message || 'Invalid or expired OTP code.');
-      } finally {
-        setIsVerifyingOtp(false);
-      }
-    } else {
+    try {
+      const userCredential = await confirmationResult.confirm(otp);
+      const idToken = await userCredential.user.getIdToken();
+      const authRes = await authService.firebaseLogin(idToken);
+      setAuthData(authRes);
+      await mergeGuestCart();
+    } catch (err: any) {
+      console.error('Firebase OTP verification error:', err);
+      setError(err.message || 'Invalid or expired OTP code.');
+    } finally {
       setIsVerifyingOtp(false);
     }
   };

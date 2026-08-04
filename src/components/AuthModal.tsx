@@ -57,26 +57,27 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     setIsLoading(true);
 
     try {
-      // 1. Call Backend direct OTP API
-      const backendRes = await authService.sendOtp(cleaned);
+      setupRecaptcha();
+      const appVerifier = (window as any).recaptchaVerifierAuthModal;
+      const formattedPhone = `+91${cleaned}`;
+      const confirmation = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
+      setConfirmationResult(confirmation);
       setOtpSent(true);
-      setOtpMsg(backendRes.message || `OTP generated for +91 ${cleaned}. Enter 6-digit code (Test OTP: 123456)`);
-
-      // 2. Optional: Try Firebase client SDK in background if configured
-      try {
-        setupRecaptcha();
-        const appVerifier = (window as any).recaptchaVerifierAuthModal;
-        if (appVerifier) {
-          const formattedPhone = `+91${cleaned}`;
-          const confirmation = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
-          setConfirmationResult(confirmation);
-        }
-      } catch (fbErr) {
-        console.warn('Firebase SMS warning (falling back to direct backend OTP):', fbErr);
-      }
+      setOtpMsg(`Firebase SMS OTP sent to +91 ${cleaned}. Please check your phone.`);
     } catch (err: any) {
-      console.error('Send OTP error:', err);
-      setErrorMsg(err.response?.data?.message || err.message || 'Failed to send OTP. Please try again.');
+      console.error('Firebase send OTP error:', err);
+      if ((window as any).recaptchaVerifierAuthModal) {
+        try {
+          (window as any).recaptchaVerifierAuthModal.clear();
+          (window as any).recaptchaVerifierAuthModal = null;
+        } catch (e) {}
+      }
+
+      if (err.code === 'auth/operation-not-allowed') {
+        setErrorMsg('Firebase SMS is disabled for your region (auth/operation-not-allowed). Enable Phone Auth & SMS Region Policy for India (+91) in Firebase Console.');
+      } else {
+        setErrorMsg(err.message || 'Failed to send OTP via Firebase.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -84,44 +85,29 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    const cleaned = otpPhone.replace(/\D/g, '');
     if (otpCode.length < 6) {
       setErrorMsg('Please enter the 6-digit OTP code.');
+      return;
+    }
+    if (!confirmationResult) {
+      setErrorMsg('No active Firebase OTP session. Please request a new OTP code.');
       return;
     }
     setErrorMsg(null);
     setIsLoading(true);
 
-    let verified = false;
-
-    // 1. Try Firebase token verification if confirmationResult exists
-    if (confirmationResult) {
-      try {
-        const credential = await confirmationResult.confirm(otpCode);
-        const idToken = await credential.user.getIdToken();
-        const res = await authService.firebaseLogin(idToken);
-        setAuthData(res);
-        await mergeGuestCart();
-        onClose();
-        verified = true;
-      } catch (fbErr) {
-        console.warn('Firebase verification failed, trying direct backend OTP verification:', fbErr);
-      }
-    }
-
-    // 2. Direct Backend OTP verification fallback
-    if (!verified) {
-      try {
-        const res = await authService.verifyOtp(cleaned, otpCode);
-        setAuthData(res);
-        await mergeGuestCart();
-        onClose();
-      } catch (err: any) {
-        console.error('Backend OTP verification error:', err);
-        setErrorMsg(err.response?.data?.message || err.message || 'Invalid or expired OTP code.');
-      } finally {
-        setIsLoading(false);
-      }
+    try {
+      const credential = await confirmationResult.confirm(otpCode);
+      const idToken = await credential.user.getIdToken();
+      const res = await authService.firebaseLogin(idToken);
+      setAuthData(res);
+      await mergeGuestCart();
+      onClose();
+    } catch (err: any) {
+      console.error('Firebase OTP verification error:', err);
+      setErrorMsg(err.message || 'Invalid or expired OTP code.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
