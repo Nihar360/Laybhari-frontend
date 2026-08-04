@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import { X, Lock, Mail, User as UserIcon, Phone } from 'lucide-react';
-import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
-import { auth } from '../config/firebase';
 import { useAuth } from '../context/AuthContext';
 import { authService } from '../services/authService';
 import { useCart } from '../context/CartContext';
@@ -29,21 +27,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [otpCode, setOtpCode] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [otpMsg, setOtpMsg] = useState<string | null>(null);
-  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   if (!isOpen) return null;
-
-  const setupRecaptcha = () => {
-    if (!(window as any).recaptchaVerifierAuthModal) {
-      (window as any).recaptchaVerifierAuthModal = new RecaptchaVerifier(auth, 'recaptcha-container-auth-modal', {
-        'size': 'invisible',
-        'callback': () => {}
-      });
-    }
-  };
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,34 +45,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     setIsLoading(true);
 
     try {
-      setupRecaptcha();
-      const appVerifier = (window as any).recaptchaVerifierAuthModal;
-      const formattedPhone = `+91${cleaned}`;
-      const confirmation = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
-      setConfirmationResult(confirmation);
+      const backendRes = await authService.sendOtp(cleaned);
       setOtpSent(true);
-      setOtpMsg(`Firebase SMS OTP sent to +91 ${cleaned}. Please check your phone.`);
+      setOtpMsg(backendRes.message || `OTP sent to +91 ${cleaned} via SMS.`);
     } catch (err: any) {
-      console.error('Firebase send OTP error:', err);
-      if ((window as any).recaptchaVerifierAuthModal) {
-        try {
-          (window as any).recaptchaVerifierAuthModal.clear();
-          (window as any).recaptchaVerifierAuthModal = null;
-        } catch (e) {}
-      }
-
-      if (err.code === 'auth/billing-not-enabled' || err.code === 'auth/operation-not-allowed') {
-        try {
-          const backendRes = await authService.sendOtp(cleaned);
-          setOtpSent(true);
-          setConfirmationResult(null);
-          setOtpMsg(`⚠️ Firebase Billing disabled. Using Backend OTP fallback for +91 ${cleaned} (Test OTP: 123456).`);
-        } catch (bErr: any) {
-          setErrorMsg('Firebase Billing is not enabled in Firebase Console. Please upgrade to Blaze Plan or add Test Phone Numbers in Firebase Console.');
-        }
-      } else {
-        setErrorMsg(err.message || 'Failed to send OTP via Firebase.');
-      }
+      console.error('Send OTP error:', err);
+      setErrorMsg(err.response?.data?.message || err.message || 'Failed to send OTP via SMS.');
     } finally {
       setIsLoading(false);
     }
@@ -100,29 +66,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     setErrorMsg(null);
     setIsLoading(true);
 
-    if (confirmationResult) {
-      try {
-        const credential = await confirmationResult.confirm(otpCode);
-        const idToken = await credential.user.getIdToken();
-        const res = await authService.firebaseLogin(idToken);
-        setAuthData(res);
-        await mergeGuestCart();
-        onClose();
-        return;
-      } catch (err: any) {
-        console.warn('Firebase OTP verification failed, trying backend fallback:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
     try {
       const res = await authService.verifyOtp(cleaned, otpCode);
       setAuthData(res);
       await mergeGuestCart();
       onClose();
     } catch (err: any) {
-      console.error('Backend OTP verification error:', err);
+      console.error('OTP verification error:', err);
       setErrorMsg(err.response?.data?.message || err.message || 'Invalid or expired OTP code.');
     } finally {
       setIsLoading(false);
@@ -283,7 +233,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   </div>
                 </div>
 
-                <div id="recaptcha-container-auth-modal" style={{ marginBottom: '10px' }}></div>
 
                 <button
                   type="submit"
