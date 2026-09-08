@@ -1,5 +1,6 @@
 import React from 'react';
 import { Heart, ShieldCheck, Award } from 'lucide-react';
+import { OptimizedImage } from '../components/OptimizedImage';
 
 export const AboutPage: React.FC = () => {
   return (

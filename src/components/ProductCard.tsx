@@ -1,6 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Product } from '../types';
+import { OptimizedImage } from './OptimizedImage';
+import { getDefaultSizes } from '../utils/imageUtils';
 
 interface ProductCardProps {
   product: Product;
@@ -58,14 +60,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           }}
         >
           {product.imageUrl ? (
-            <img
+            <OptimizedImage
               src={product.imageUrl}
               alt={product.name}
+              width={400}
+              loading="lazy"
+              sizes={getDefaultSizes('card')}
+              objectFit="contain"
               className="prod-card-img"
               style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain',
                 transition: 'transform 250ms cubic-bezier(0.16, 1, 0.3, 1)'
               }}
             />

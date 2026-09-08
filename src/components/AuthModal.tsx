@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Lock, Mail, User as UserIcon, Phone } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { OptimizedImage } from './OptimizedImage';
 import { authService } from '../services/authService';
 import { useCart } from '../context/CartContext';
 

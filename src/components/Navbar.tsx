@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Search, User as UserIcon, ShoppingBag, LogOut, Package, MapPin, Menu, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { OptimizedImage } from './OptimizedImage';
 
 interface NavbarProps {
   onOpenAuthModal: () => void;

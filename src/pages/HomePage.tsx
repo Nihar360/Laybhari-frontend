@@ -7,6 +7,7 @@ import { ProductCard } from '../components/ProductCard';
 import { LoadingView, EmptyView, ErrorView } from '../components/StateViews';
 import { HeroSlider } from '../components/HeroSlider';
 import { FeaturesSection } from '../components/FeaturesSection';
+import { OptimizedImage } from '../components/OptimizedImage';
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -161,7 +162,7 @@ export const HomePage: React.FC = () => {
                   border: '2px solid #FDE68A',
                 }}>
                   {cat.imageUrl ? (
-                    <img src={cat.imageUrl} alt={cat.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <OptimizedImage src={cat.imageUrl} alt={cat.name} width={150} loading="lazy" objectFit="cover" />
                   ) : (
                     <Tag size={16} color="#D97706" />
                   )}

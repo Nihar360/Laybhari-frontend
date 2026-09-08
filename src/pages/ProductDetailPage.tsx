@@ -20,6 +20,8 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { ProductCard } from '../components/ProductCard';
 import { LoadingView, ErrorView } from '../components/StateViews';
+import { OptimizedImage } from '../components/OptimizedImage';
+import { getDefaultSizes } from '../utils/imageUtils';
 
 export const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -183,7 +185,15 @@ export const ProductDetailPage: React.FC = () => {
                       transition: 'all 0.2s ease'
                     }}
                   >
-                    <img src={imgUrl} alt={`Thumbnail ${index + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }} />
+                    <OptimizedImage
+                      src={imgUrl}
+                      alt={`Thumbnail ${index + 1}`}
+                      width={150}
+                      loading="lazy"
+                      sizes={getDefaultSizes('thumbnail')}
+                      objectFit="cover"
+                      style={{ borderRadius: '4px' }}
+                    />
                   </div>
                 ))}
 
@@ -214,29 +224,43 @@ export const ProductDetailPage: React.FC = () => {
               }}
             >
               {galleryImages.length > 0 ? (
-                <img
+                <OptimizedImage
                   src={galleryImages[selectedImageIndex] || galleryImages[0]}
                   alt={product.name}
-                  style={{ maxWidth: '100%', maxHeight: '400px', objectFit: 'contain' }}
+                  width={800}
+                  loading="eager"
+                  fetchPriority="high"
+                  sizes={getDefaultSizes('detail')}
+                  objectFit="contain"
+                  style={{ maxWidth: '100%', maxHeight: '400px' }}
                 />
               ) : (
                 <div style={{ textAlign: 'center' }}>
-                  <img src="/logo-badge.jpg" alt="Laybhari Seal" style={{ width: '120px', height: '120px', borderRadius: '50%', marginBottom: '16px' }} />
+                  <OptimizedImage
+                    src="/logo-badge.jpg"
+                    alt="Laybhari Seal"
+                    width={120}
+                    loading="eager"
+                    objectFit="cover"
+                    containerStyle={{ width: '120px', height: '120px', borderRadius: '50%', marginBottom: '16px', margin: '0 auto' }}
+                  />
                   <h3 style={{ fontSize: '20px', fontWeight: 900, color: '#382012' }}>{product.name}</h3>
                 </div>
               )}
 
-              <img
+              <OptimizedImage
                 src="/logo-badge.jpg"
                 alt="Laybhari Seal"
-                style={{
+                width={100}
+                loading="lazy"
+                objectFit="cover"
+                containerStyle={{
                   position: 'absolute',
                   top: '16px',
                   right: '16px',
                   width: '44px',
                   height: '44px',
                   borderRadius: '50%',
-                  objectFit: 'cover',
                   border: '2px solid #FDE68A',
                   boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
                 }}

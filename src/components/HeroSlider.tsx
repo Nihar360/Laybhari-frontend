@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { OptimizedImage } from './OptimizedImage';
+import { getDefaultSizes } from '../utils/imageUtils';
 
 interface Slide {
   id: number;
@@ -101,7 +103,8 @@ export const HeroSlider: React.FC = () => {
                       alt={slide.alt}
                       loading="eager"
                       decoding="async"
-                      fetchPriority="high"
+                      // @ts-ignore fetchpriority is standard HTML
+                      fetchpriority="high"
                       className="hero-slide-img"
                     />
                   </Link>

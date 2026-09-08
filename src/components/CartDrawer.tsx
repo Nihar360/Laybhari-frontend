@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { OptimizedImage } from './OptimizedImage';
 
 export const CartDrawer: React.FC = () => {
   const {
@@ -86,7 +87,7 @@ export const CartDrawer: React.FC = () => {
                 >
                   <div style={{ width: '60px', height: '60px', backgroundColor: '#FFFFFF', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     {item.productImageUrl ? (
-                      <img src={item.productImageUrl} alt={item.productName} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                      <OptimizedImage src={item.productImageUrl} alt={item.productName} width={150} loading="lazy" objectFit="contain" />
                     ) : (
                       <span style={{ fontSize: '24px' }}>🌶️</span>
                     )}

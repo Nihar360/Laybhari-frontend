@@ -11,6 +11,8 @@ import {
   ShoppingBag,
   ArrowRight
 } from 'lucide-react';
+import { LoadingView } from '../components/StateViews';
+import { OptimizedImage } from '../components/OptimizedImage';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -101,7 +103,7 @@ export const CartPage: React.FC = () => {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                         <div style={{ width: '64px', height: '64px', backgroundColor: '#FAF5EF', borderRadius: '8px', border: '1px solid #E8DFD5', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px', flexShrink: 0 }}>
                           {item.productImageUrl ? (
-                            <img src={item.productImageUrl} alt={item.productName} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                            <OptimizedImage src={item.productImageUrl} alt={item.productName} width={150} loading="lazy" objectFit="contain" />
                           ) : (
                             <span style={{ fontSize: '28px' }}>🌶️</span>
                           )}
